@@ -1,0 +1,14 @@
+{% extends "layout.html" %}
+{% block title %}Search — MiniTweet{% endblock %}
+{% block content %}
+<div class="max-w-5xl mx-auto px-4 sm:px-6 py-8">
+  <h1 class="font-display font-700 text-2xl mb-6">
+    Results for <span class="gradient-text">"{{ query }}"</span>
+  </h1>
+  {% for tweet in tweets %}
+    <p>{{ tweet.content }}</p>
+  {% empty %}
+    <p class="text-gray-500">No tweets found.</p>
+  {% endfor %}
+</div>
+{% endblock %}
