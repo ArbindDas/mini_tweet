@@ -228,7 +228,7 @@
   <nav class="max-w-5xl mx-auto px-4 sm:px-6 h-16 flex items-center justify-between gap-4">
 
     <!-- Logo -->
-    <a href="{% url 'home' %}" class="flex items-center gap-2.5 flex-shrink-0 group">
+    <a href="" class="flex items-center gap-2.5 flex-shrink-0 group">
       <span class="w-8 h-8 rounded-xl flex items-center justify-center
                    bg-brand-gradient shadow-md group-hover:scale-105 transition-transform duration-200">
         <!-- Bird icon -->
@@ -279,7 +279,7 @@
 
       {% if user.is_authenticated %}
         <!-- New tweet -->
-        <a href="#" class="btn btn-primary gap-1.5 hidden sm:inline-flex">
+        <a href="{% url "tweet_list" %}" class="btn btn-primary gap-1.5 hidden sm:inline-flex">
           <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" fill="none" viewBox="0 0 24 24"
                stroke="currentColor" stroke-width="2.5">
             <line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/>
@@ -311,7 +311,7 @@
               </p>
               <p class="text-xs text-gray-400 truncate">{{ user.email }}</p>
             </div>
-            <a href="#"
+            <a href="{% url "profile" %}"
                class="flex items-center gap-2.5 px-4 py-2 text-sm text-gray-700 dark:text-gray-300
                       hover:bg-brand-50 dark:hover:bg-brand-700/10 hover:text-brand-600 dark:hover:text-brand-400
                       transition-colors duration-150">
@@ -320,7 +320,7 @@
               </svg>
               Profile
             </a>
-            <a href="#"
+            <a href="{% url "tweet_list" %}"
                class="flex items-center gap-2.5 px-4 py-2 text-sm text-gray-700 dark:text-gray-300
                       hover:bg-brand-50 dark:hover:bg-brand-700/10 hover:text-brand-600 dark:hover:text-brand-400
                       transition-colors duration-150 sm:hidden">
@@ -330,7 +330,7 @@
               New Tweet
             </a>
             <div class="border-t border-gray-100 dark:border-gray-700/60 mt-1 pt-1">
-              <form method="POST" action="#">
+              <form method="POST" action="{% url "logout" %}">
                 {% csrf_token %}
                 <button type="submit"
                         class="w-full flex items-center gap-2.5 px-4 py-2 text-sm text-red-500

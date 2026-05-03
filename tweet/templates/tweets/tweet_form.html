@@ -1,0 +1,331 @@
+{% extends "base/layout.html" %}
+
+{% block title %}
+  {% if form.instance.pk %}Edit Tweet{% else %}Create Tweet{% endif %} — MiniTweet
+{% endblock %}
+
+{% block content %}
+<div class="max-w-2xl mx-auto px-4 sm:px-6 py-10">
+
+  <!-- Page Header -->
+  <div class="mb-8">
+    <a href="{% url 'tweet_list' %}"
+       class="inline-flex items-center gap-2 text-sm text-gray-500 dark:text-gray-400
+              hover:text-brand-600 dark:hover:text-brand-400 transition-colors duration-200 mb-4">
+      <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" d="M10.5 19.5L3 12m0 0l7.5-7.5M3 12h18"/>
+      </svg>
+      Back to feed
+    </a>
+    <h1 class="font-display font-800 text-2xl sm:text-3xl text-gray-900 dark:text-white">
+      {% if form.instance.pk %}
+        Edit your <span class="gradient-text">Tweet</span>
+      {% else %}
+        New <span class="gradient-text">Tweet</span>
+      {% endif %}
+    </h1>
+    <p class="text-sm text-gray-500 dark:text-gray-400 mt-1">
+      {% if form.instance.pk %}
+        Update what you shared with the world.
+      {% else %}
+        Share what's on your mind right now.
+      {% endif %}
+    </p>
+  </div>
+
+  <!-- Composer Card -->
+  <div class="card p-6 sm:p-8">
+
+    <!-- User identity row -->
+    <div class="flex items-center gap-4 mb-7 pb-6
+                border-b border-gray-100 dark:border-gray-700/50">
+      <div class="relative flex-shrink-0">
+        <div class="w-12 h-12 rounded-full bg-brand-gradient flex items-center justify-center shadow-md">
+          <span class="text-white text-base font-bold uppercase">
+            {{ request.user.username|first }}
+          </span>
+        </div>
+        <span class="absolute -bottom-0.5 -right-0.5 w-3.5 h-3.5 bg-emerald-400
+                     border-2 border-white dark:border-gray-900 rounded-full"></span>
+      </div>
+      <div>
+        <p class="font-display font-700 text-sm text-gray-900 dark:text-white">
+          {{ request.user.username }}
+        </p>
+        <p class="text-xs text-gray-400 dark:text-gray-500">
+          @{{ request.user.username|lower }}
+        </p>
+      </div>
+    </div>
+
+    <!-- Form -->
+    <form method="POST" enctype="multipart/form-data" id="tweetForm">
+      {% csrf_token %}
+
+      <!-- Non-field errors -->
+      {% if form.non_field_errors %}
+      <div class="mb-5 flex items-start gap-3 px-4 py-3 rounded-xl
+                  bg-red-50 dark:bg-red-500/10
+                  border border-red-200 dark:border-red-500/20">
+        <svg class="w-4 h-4 text-red-500 flex-shrink-0 mt-0.5" fill="currentColor" viewBox="0 0 20 20">
+          <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-8-5a.75.75 0 01.75.75v4.5a.75.75 0 01-1.5 0v-4.5A.75.75 0 0110 5zm0 10a1 1 0 100-2 1 1 0 000 2z" clip-rule="evenodd"/>
+        </svg>
+        <p class="text-red-600 dark:text-red-400 text-sm">{{ form.non_field_errors|join:", " }}</p>
+      </div>
+      {% endif %}
+
+      <!-- Tweet Text -->
+      <div class="mb-6">
+        <label for="id_text"
+               class="block text-xs font-semibold uppercase tracking-widest
+                      text-gray-500 dark:text-gray-400 mb-2">
+          What's on your mind?
+        </label>
+        <div class="relative">
+          <textarea
+            name="text"
+            id="id_text"
+            maxlength="204"
+            rows="5"
+            placeholder="Share something with the world…"
+            oninput="updateCounter(this)"
+            class="w-full rounded-xl px-4 py-3.5 text-sm leading-relaxed resize-none
+                   bg-gray-50 dark:bg-gray-800/60
+                   border border-gray-200 dark:border-gray-700/50
+                   text-gray-900 dark:text-white
+                   placeholder-gray-400 dark:placeholder-gray-600
+                   focus:outline-none focus:ring-2 focus:ring-brand-500/40
+                   focus:border-brand-400 dark:focus:border-brand-500
+                   transition-all duration-200"
+          >{% if form.text.value %}{{ form.text.value }}{% endif %}</textarea>
+
+          <!-- Char counter -->
+          <div class="absolute bottom-3 right-3 flex items-center gap-2">
+            <div class="relative w-7 h-7">
+              <svg class="w-7 h-7 -rotate-90" viewBox="0 0 28 28">
+                <circle cx="14" cy="14" r="11" fill="none"
+                        stroke="currentColor" stroke-width="2.5"
+                        class="text-gray-200 dark:text-gray-700"/>
+                <circle id="ringCircle" cx="14" cy="14" r="11" fill="none"
+                        stroke="url(#ringGrad)" stroke-width="2.5"
+                        stroke-dasharray="69.115" stroke-dashoffset="69.115"
+                        stroke-linecap="round"
+                        style="transition: stroke-dashoffset 0.2s ease"/>
+                <defs>
+                  <linearGradient id="ringGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+                    <stop offset="0%" stop-color="#6366f1"/>
+                    <stop offset="100%" stop-color="#9333ea"/>
+                  </linearGradient>
+                </defs>
+              </svg>
+            </div>
+            <span id="charCount"
+                  class="text-xs text-gray-400 dark:text-gray-500 tabular-nums w-8 text-right">
+              204
+            </span>
+          </div>
+        </div>
+
+        {% if form.text.errors %}
+        <p class="mt-2 text-xs text-red-500 flex items-center gap-1.5">
+          <svg class="w-3.5 h-3.5" fill="currentColor" viewBox="0 0 20 20">
+            <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-8-5a.75.75 0 01.75.75v4.5a.75.75 0 01-1.5 0v-4.5A.75.75 0 0110 5zm0 10a1 1 0 100-2 1 1 0 000 2z" clip-rule="evenodd"/>
+          </svg>
+          {{ form.text.errors|join:", " }}
+        </p>
+        {% endif %}
+      </div>
+
+      <!-- Divider -->
+      <div class="h-px bg-gray-100 dark:bg-gray-700/50 mb-6"></div>
+
+      <!-- Photo Upload -->
+      <div class="mb-8">
+        <label class="block text-xs font-semibold uppercase tracking-widest
+                      text-gray-500 dark:text-gray-400 mb-2">
+          Attach a photo
+          <span class="ml-1 normal-case tracking-normal font-normal text-gray-400 dark:text-gray-600">
+            (optional)
+          </span>
+        </label>
+
+        <label for="id_photo" id="dropZone"
+               class="group relative flex flex-col items-center justify-center gap-3
+                      w-full h-36 rounded-xl cursor-pointer
+                      border-2 border-dashed border-gray-200 dark:border-gray-700/60
+                      bg-gray-50 dark:bg-gray-800/40
+                      hover:border-brand-400 dark:hover:border-brand-500
+                      hover:bg-brand-50 dark:hover:bg-brand-500/5
+                      transition-all duration-300">
+
+          <img id="photoPreview"
+               class="hidden absolute inset-0 w-full h-full object-cover rounded-xl opacity-70"
+               alt="preview">
+
+          <div id="uploadIcon" class="flex flex-col items-center gap-2 pointer-events-none">
+            <div class="w-10 h-10 rounded-xl flex items-center justify-center
+                        bg-gray-100 dark:bg-gray-700/60
+                        border border-gray-200 dark:border-gray-700
+                        group-hover:border-brand-300 dark:group-hover:border-brand-600
+                        group-hover:bg-brand-50 dark:group-hover:bg-brand-500/10
+                        transition-all duration-300">
+              <svg class="w-5 h-5 text-gray-400 dark:text-gray-500
+                          group-hover:text-brand-500 dark:group-hover:text-brand-400
+                          transition-colors duration-300"
+                   fill="none" stroke="currentColor" stroke-width="1.75" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M2.25 15.75l5.159-5.159a2.25 2.25 0 013.182 0l5.159 5.159m-1.5-1.5l1.409-1.409a2.25 2.25 0 013.182 0l2.909 2.909m-18 3.75h16.5a1.5 1.5 0 001.5-1.5V6a1.5 1.5 0 00-1.5-1.5H3.75A1.5 1.5 0 002.25 6v12a1.5 1.5 0 001.5 1.5zm10.5-11.25h.008v.008h-.008V8.25zm.375 0a.375.375 0 11-.75 0 .375.375 0 01.75 0z"/>
+              </svg>
+            </div>
+            <div class="text-center">
+              <p class="text-xs font-medium text-gray-500 dark:text-gray-400
+                        group-hover:text-brand-600 dark:group-hover:text-brand-400
+                        transition-colors duration-200">
+                Click to upload a photo
+              </p>
+              <p class="text-xs text-gray-400 dark:text-gray-600 mt-0.5">
+                PNG, JPG, GIF up to 10MB
+              </p>
+            </div>
+          </div>
+
+          <input type="file" name="photo" id="id_photo"
+                 accept="image/*" class="hidden" onchange="previewPhoto(this)">
+        </label>
+
+        <button type="button" id="removePhoto"
+                onclick="removePhotoPreview()"
+                class="hidden mt-2 text-xs text-red-500 hover:text-red-600
+                       items-center gap-1 transition-colors duration-200">
+          <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/>
+          </svg>
+          Remove photo
+        </button>
+
+        {% if form.photo.errors %}
+        <p class="mt-2 text-xs text-red-500 flex items-center gap-1.5">
+          <svg class="w-3.5 h-3.5" fill="currentColor" viewBox="0 0 20 20">
+            <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-8-5a.75.75 0 01.75.75v4.5a.75.75 0 01-1.5 0v-4.5A.75.75 0 0110 5zm0 10a1 1 0 100-2 1 1 0 000 2z" clip-rule="evenodd"/>
+          </svg>
+          {{ form.photo.errors|join:", " }}
+        </p>
+        {% endif %}
+      </div>
+
+      <!-- Action row -->
+      <div class="flex items-center justify-between gap-3">
+
+        <!-- Toolbar (cosmetic) -->
+        <div class="flex items-center gap-1">
+          <button type="button"
+                  class="w-8 h-8 flex items-center justify-center rounded-lg
+                         text-gray-400 dark:text-gray-600
+                         hover:text-brand-600 hover:bg-brand-50 dark:hover:bg-brand-500/10
+                         transition-all duration-200" title="Emoji">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M15.182 15.182a4.5 4.5 0 01-6.364 0M21 12a9 9 0 11-18 0 9 9 0 0118 0zM9.75 9.75c0 .414-.168.75-.375.75S9 10.164 9 9.75 9.168 9 9.375 9s.375.336.375.75zm-.375 0h.008v.015h-.008V9.75zm5.625 0c0 .414-.168.75-.375.75s-.375-.336-.375-.75.168-.75.375-.75.375.336.375.75zm-.375 0h.008v.015h-.008V9.75z"/>
+            </svg>
+          </button>
+          <button type="button"
+                  class="w-8 h-8 flex items-center justify-center rounded-lg
+                         text-gray-400 dark:text-gray-600
+                         hover:text-brand-600 hover:bg-brand-50 dark:hover:bg-brand-500/10
+                         transition-all duration-200" title="Mention">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M16.5 12a4.5 4.5 0 11-9 0 4.5 4.5 0 019 0zm0 0c0 1.657 1.007 3 2.25 3S21 13.657 21 12a9 9 0 10-2.636 6.364M16.5 12V8.25"/>
+            </svg>
+          </button>
+          <button type="button"
+                  class="w-8 h-8 flex items-center justify-center rounded-lg
+                         text-gray-400 dark:text-gray-600
+                         hover:text-brand-600 hover:bg-brand-50 dark:hover:bg-brand-500/10
+                         transition-all duration-200" title="Hashtag">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M5.25 8.25h15m-16.5 7.5h15m-1.8-13.5l-3.9 19.5m-2.1-19.5l-3.9 19.5"/>
+            </svg>
+          </button>
+        </div>
+
+        <!-- Submit -->
+        <div class="flex items-center gap-3">
+          <a href="{% url 'tweet_list' %}" class="btn btn-secondary">Cancel</a>
+          <button type="submit" class="btn btn-primary flex items-center gap-2">
+            <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
+              <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/>
+            </svg>
+            {% if form.instance.pk %}Save changes{% else %}Tweet{% endif %}
+          </button>
+        </div>
+      </div>
+
+    </form>
+  </div>
+
+  <!-- Tip -->
+  <div class="mt-4 flex items-start gap-3 px-5 py-4 rounded-xl
+              bg-brand-50 dark:bg-brand-700/10
+              border border-brand-100 dark:border-brand-700/20">
+    <svg class="w-4 h-4 text-brand-500 dark:text-brand-400 flex-shrink-0 mt-0.5"
+         fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+      <path stroke-linecap="round" stroke-linejoin="round" d="M12 18v-5.25m0 0a6.01 6.01 0 001.5-.189m-1.5.189a6.01 6.01 0 01-1.5-.189m3.75 7.478a12.06 12.06 0 01-4.5 0m3.75 2.383a14.406 14.406 0 01-3 0M14.25 18v-.192c0-.983.658-1.823 1.508-2.316a7.5 7.5 0 10-7.517 0c.85.493 1.509 1.333 1.509 2.316V18"/>
+    </svg>
+    <p class="text-xs text-gray-500 dark:text-gray-400 leading-relaxed">
+      Keep it concise — you have
+      <span class="text-gray-700 dark:text-gray-300 font-medium">204 characters</span>.
+      Tweets with photos get
+      <span class="text-brand-600 dark:text-brand-400 font-medium">3× more engagement</span>.
+    </p>
+  </div>
+
+</div>
+
+<script>
+  const MAX = 204;
+  const circumference = 69.115;
+
+  function updateCounter(el) {
+    const used = el.value.length;
+    const remaining = MAX - used;
+    const offset = circumference * (1 - used / MAX);
+    document.getElementById('ringCircle').style.strokeDashoffset = offset;
+    const countEl = document.getElementById('charCount');
+    countEl.textContent = remaining;
+    if (remaining <= 20) {
+      countEl.className = 'text-xs tabular-nums w-8 text-right text-red-500';
+    } else if (remaining <= 50) {
+      countEl.className = 'text-xs tabular-nums w-8 text-right text-amber-500';
+    } else {
+      countEl.className = 'text-xs tabular-nums w-8 text-right text-gray-400 dark:text-gray-500';
+    }
+  }
+
+  function previewPhoto(input) {
+    if (input.files && input.files[0]) {
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        document.getElementById('photoPreview').src = e.target.result;
+        document.getElementById('photoPreview').classList.remove('hidden');
+        document.getElementById('uploadIcon').classList.add('hidden');
+        const btn = document.getElementById('removePhoto');
+        btn.classList.remove('hidden');
+        btn.classList.add('flex');
+      };
+      reader.readAsDataURL(input.files[0]);
+    }
+  }
+
+  function removePhotoPreview() {
+    document.getElementById('photoPreview').classList.add('hidden');
+    document.getElementById('photoPreview').src = '';
+    document.getElementById('uploadIcon').classList.remove('hidden');
+    const btn = document.getElementById('removePhoto');
+    btn.classList.add('hidden');
+    btn.classList.remove('flex');
+    document.getElementById('id_photo').value = '';
+  }
+
+  const textarea = document.getElementById('id_text');
+  if (textarea && textarea.value) updateCounter(textarea);
+</script>
+
+{% endblock %}
